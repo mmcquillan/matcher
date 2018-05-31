@@ -45,52 +45,73 @@ A library for parsing and matching based on a mask for use with CLI or Bots.
 ## Matcher
 
 ```
-match, command, values := Matcher("run <speed> [distance]", "run fast far")
+match, command, values := matcher.Matcher("run <speed> [distance]", "run fast far")
 if match {
-  fmt.Printf("Command:%v", command)
-  for k, v := range values {
-    fmt.Printf("%v:%v", k, v)
-  }
-  fmt.Print("\n")
+	fmt.Printf("Command:%v\n", command)
+	for k, v := range values {
+		fmt.Printf("%v:%v\n", k, v)
+	}
+	fmt.Print("\n")
 }
+
+- - -
+Command:run
+speed:fast
+distance:far
 ```
 
 
 ## Masker
 
 ```
-tokens := Masker("run <speed> [distance] [--jump]")
+tokens := matcher.Masker("run <speed> [distance] [--jump]")
 for _, t := range tokens {
-  fmt.Printf("Name:%v", t.Name)
-  fmt.Printf("Type:%v", t.Type)
-  fmt.Printf("Valid:%v", t.Valid)
-  fmt.Printf("Required:%v", t.Required)
-  fmt.Printf("Flag:%v", t.Flag)
-  fmt.Printf("Remainder:%v", t.Reemainder)
-  fmt.Print("\n")
+	fmt.Printf("Name:%v ", t.Name)
+	fmt.Printf("Type:%v ", t.Type)
+	fmt.Printf("Valid:%v ", t.Valid)
+	fmt.Printf("Required:%v ", t.Required)
+	fmt.Printf("Flag:%v ", t.Flag)
+	fmt.Printf("Remainder:%v\n", t.Remainder)
 }
+
+- - -
+Name:run Type:text Valid:run Required:true Flag:false Remainder:false
+Name:speed Type:string Valid:* Required:true Flag:false Remainder:false
+Name:distance Type:string Valid:* Required:false Flag:false Remainder:false
+Name:jump Type:string Valid:* Required:false Flag:true Remainder:false
 ```
 
 
 ## Parser
 
 ```
-args, flags := Parser("run far away --jump=high")
+args, flags := matcher.Parser("run far away --jump=high")
 for i, arg := range args {
-  fmt.Printf("Arg $v: %v\n", i, arg)
+	fmt.Printf("Arg %v: %v\n", i, arg)
 }
 for _, flag := range flags {
-  fmt.Printf("$v: %v\n", flag.Name, flag.Value)
+	fmt.Printf("%v: %v\n", flag.Name, flag.Value)
 }
+
+- - -
+Arg 0: run
+Arg 1: far
+Arg 2: away
+jump: high
 ```
 
 
 ## Tokenize
 
 ```
-tokens := Tokenize(" run far away ")
+tokens := matcher.Tokenize(" run far away ")
 for _, t := range tokens {
-  fmt.Println(t)
+	fmt.Println(t)
 }
+
+- - -
+run
+far
+away
 ```
 
