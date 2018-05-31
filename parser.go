@@ -4,34 +4,33 @@ import (
 	"strings"
 )
 
-// Arg struct
-type Arg struct {
-	Pos   int
+// Flag struct
+type Flag struct {
+	Name  string
 	Value string
-	Flag  bool
 }
 
 // Parser function
-func Parser(input string) (args []Arg) {
+func Parser(input string) (args []string, flags []Flag) {
 	ts := Tokenize(input)
-	args = make([]Arg, len(ts))
-	for i, t := range ts {
+	args = make([]string, 0)
+	flags = make([]Flag, 0)
+	for _, t := range ts {
 		if strings.HasPrefix(t, "--") {
-			if !strings.Contains(t, "=") {
-				t += "=true"
-			}
-			args[i] = Arg{
-				Pos:   i,
-				Value: t[2:],
-				Flag:  true,
+			if strings.Contains(t, "=") {
+				flags = append(flags, Flag{
+					Name:  strings.Split(t, "=")[0][2:],
+					Value: strings.Split(t, "=")[1],
+				})
+			} else {
+				flags = append(flags, Flag{
+					Name:  t[2:],
+					Value: "true",
+				})
 			}
 		} else {
-			args[i] = Arg{
-				Pos:   i,
-				Value: t,
-				Flag:  false,
-			}
+			args = append(args, t)
 		}
 	}
-	return args
+	return args, flags
 }

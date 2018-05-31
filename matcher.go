@@ -1,76 +1,152 @@
 package matcher
 
 import (
+	"strconv"
 	"strings"
 )
 
 // Matcher func
 func Matcher(mask string, input string) (match bool, command string, values map[string]string) {
 
-	// initialize values
-	match = false
+	// initialize
+	match = true
 	command = ""
 	values = make(map[string]string)
+	args, flags := Parser(input)
+	masks := Masker(mask)
+	pos := 0
 
-	// tokenize input
-	inputTokens := Parser(input)
-	maskTokens := Masker(mask)
-
-	// process input flags first
-	var inputs []string
-	for _, token := range inputTokens {
-		if token.Flag {
-			flag := strings.Split(token.Value, "=")
-			values[flag[0]] = flag[1]
-		} else {
-			inputs = append(inputs, token.Value)
-		}
-	}
-
-	// process flags not passed in
-	for _, token := range maskTokens {
-		if token.Flag {
-			if _, chk := values[token.Value]; !chk {
-				values[token.Value] = "false"
+	// initial flag pass
+	for _, flag := range flags {
+		allFlags := false
+		matchFlag := false
+		for _, mask := range masks {
+			if mask.Flag {
+				if mask.Name == flag.Name {
+					matchFlag = true
+				}
+				if mask.Name == "" {
+					allFlags = true
+				}
 			}
 		}
+		if !matchFlag && allFlags {
+			values[flag.Name] = flag.Value
+		} else if !allFlags && !matchFlag {
+			match = false
+		}
 	}
 
-	// compare input to mask
-	match = true
-	for i, m := range maskTokens {
-		if match && i < len(inputs) {
-			if m.Text {
-				if m.Value == inputs[i] {
-					command += inputs[i] + " "
-					match = true
-				} else {
+	// loop over the mask
+	for _, mask := range masks {
+		if match {
+			if mask.Flag {
+				pos--
+				flagMatch := false
+				for _, flag := range flags {
+					if mask.Name == flag.Name {
+
+						// check for valid values
+						valid := false
+						for _, v := range strings.Split(mask.Valid, ",") {
+							if v == flag.Value || v == "*" {
+								valid = true
+							}
+						}
+						match = valid
+
+						// check for type
+						switch mask.Type {
+						case "string":
+							values[mask.Name] = flag.Value
+						case "int":
+							values[mask.Name] = flag.Value
+							_, err := strconv.ParseInt(flag.Value, 10, 64)
+							if err != nil {
+								match = false
+							}
+						case "bool":
+							values[mask.Name] = flag.Value
+							_, err := strconv.ParseBool(flag.Value)
+							if err != nil {
+								match = false
+							}
+						}
+
+						flagMatch = true
+
+					}
+				}
+				if mask.Required && !flagMatch {
 					match = false
 				}
-			} else if m.Remainder {
-				values[m.Value] = strings.Join(inputs[i:], " ")
-				match = true
 			} else {
-				values[m.Value] = inputs[i]
-				match = true
+				if pos < len(args) {
+
+					// eval remainder
+					arg := args[pos]
+					if mask.Remainder {
+						arg = strings.Join(args[pos:], " ")
+						pos = len(args)
+					}
+
+					// check for valid values
+					valid := false
+					for _, v := range strings.Split(mask.Valid, ",") {
+						if v == arg || v == "*" {
+							valid = true
+						}
+					}
+					match = valid
+
+					// check for type
+					switch mask.Type {
+					case "text":
+						if mask.Name != arg {
+							match = false
+						} else {
+							command += arg + " "
+						}
+					case "string":
+						values[mask.Name] = arg
+					case "int":
+						values[mask.Name] = arg
+						_, err := strconv.ParseInt(arg, 10, 64)
+						if err != nil {
+							match = false
+						}
+					case "bool":
+						values[mask.Name] = arg
+						_, err := strconv.ParseBool(arg)
+						if err != nil {
+							match = false
+						}
+					}
+				} else {
+
+					// check required
+					if mask.Required {
+						match = false
+					}
+
+				}
 			}
-		} else if match {
-			if m.Text || m.Required {
-				match = false
-			} else if !m.Required || m.Remainder {
-				match = true
-			}
-		} else {
-			match = false
+			pos++
 		}
 	}
 
-	// if no remainder and more inputs than masks
-	if len(maskTokens) < len(inputs) {
-		if !maskTokens[len(maskTokens)-1].Remainder {
-			match = false
-		}
+	// check for arg length
+	if pos < len(args) {
+		match = false
 	}
 
+	// reset values on no match
+	if !match {
+		command = ""
+		values = make(map[string]string)
+	}
+
+	// return
 	return match, strings.TrimSpace(command), values
+
 }
