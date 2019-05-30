@@ -10,7 +10,8 @@ type Mask struct {
 	Type      string
 	Valid     string
 	Required  bool
-	Flag      bool
+	ShortFlag bool
+	LongFlag  bool
 	Remainder bool
 }
 
@@ -25,7 +26,8 @@ func Masker(input string) (tokens []Mask) {
 			tokens[i] = Mask{
 				Name:      n,
 				Required:  true,
-				Flag:      true,
+				ShortFlag: false,
+				LongFlag:  true,
 				Remainder: false,
 				Type:      t,
 				Valid:     v,
@@ -35,7 +37,30 @@ func Masker(input string) (tokens []Mask) {
 			tokens[i] = Mask{
 				Name:      n,
 				Required:  false,
-				Flag:      true,
+				ShortFlag: false,
+				LongFlag:  true,
+				Remainder: false,
+				Type:      t,
+				Valid:     v,
+			}
+		} else if strings.HasPrefix(tn, "<-") && strings.HasSuffix(tn, ">") {
+			n, t, v := typer(tn[2 : l-1])
+			tokens[i] = Mask{
+				Name:      n,
+				Required:  true,
+				ShortFlag: true,
+				LongFlag:  false,
+				Remainder: false,
+				Type:      t,
+				Valid:     v,
+			}
+		} else if strings.HasPrefix(tn, "[-") && strings.HasSuffix(tn, "]") {
+			n, t, v := typer(tn[2 : l-1])
+			tokens[i] = Mask{
+				Name:      n,
+				Required:  false,
+				ShortFlag: true,
+				LongFlag:  false,
 				Remainder: false,
 				Type:      t,
 				Valid:     v,
@@ -45,7 +70,8 @@ func Masker(input string) (tokens []Mask) {
 			tokens[i] = Mask{
 				Name:      n,
 				Required:  false,
-				Flag:      false,
+				ShortFlag: false,
+				LongFlag:  false,
 				Remainder: true,
 				Type:      t,
 				Valid:     v,
@@ -55,7 +81,8 @@ func Masker(input string) (tokens []Mask) {
 			tokens[i] = Mask{
 				Name:      n,
 				Required:  true,
-				Flag:      false,
+				ShortFlag: false,
+				LongFlag:  false,
 				Remainder: true,
 				Type:      t,
 				Valid:     v,
@@ -65,7 +92,8 @@ func Masker(input string) (tokens []Mask) {
 			tokens[i] = Mask{
 				Name:      n,
 				Required:  false,
-				Flag:      false,
+				ShortFlag: false,
+				LongFlag:  false,
 				Remainder: false,
 				Type:      t,
 				Valid:     v,
@@ -75,7 +103,8 @@ func Masker(input string) (tokens []Mask) {
 			tokens[i] = Mask{
 				Name:      n,
 				Required:  true,
-				Flag:      false,
+				ShortFlag: false,
+				LongFlag:  false,
 				Remainder: false,
 				Type:      t,
 				Valid:     v,
@@ -84,7 +113,8 @@ func Masker(input string) (tokens []Mask) {
 			tokens[i] = Mask{
 				Name:      tn,
 				Required:  true,
-				Flag:      false,
+				ShortFlag: false,
+				LongFlag:  false,
 				Remainder: false,
 				Type:      "text",
 				Valid:     tn,

@@ -298,3 +298,58 @@ func TestMatcherIntRequiredValidFailed(t *testing.T) {
 	assert.Equal(t, command, "", "they should be equal")
 	assert.Equal(t, len(values), 0, "they should be equal")
 }
+
+func TestMatcherShortFlag1(t *testing.T) {
+	match, command, values := Matcher("run <speed> [-skip]", "run fast -skip")
+	assert.Equal(t, match, true, "they should be equal")
+	assert.Equal(t, command, "run", "they should be equal")
+	assert.Equal(t, values["speed"], "fast", "they should be equal")
+	assert.Equal(t, values["skip"], "true", "they should be equal")
+	assert.Equal(t, len(values), 2, "they should be equal")
+}
+
+func TestMatcherShortFlag2(t *testing.T) {
+	match, command, values := Matcher("run [speed] [-skip]", "run -skip")
+	assert.Equal(t, match, true, "they should be equal")
+	assert.Equal(t, command, "run", "they should be equal")
+	assert.Equal(t, values["skip"], "true", "they should be equal")
+	assert.Equal(t, len(values), 1, "they should be equal")
+}
+
+func TestMatcherNoShortFlag(t *testing.T) {
+	match, command, values := Matcher("run <speed> [-skip]", "run fast")
+	assert.Equal(t, match, true, "they should be equal")
+	assert.Equal(t, command, "run", "they should be equal")
+	assert.Equal(t, values["speed"], "fast", "they should be equal")
+	assert.Equal(t, len(values), 1, "they should be equal")
+}
+
+func TestMatcherRequiredShortFlag(t *testing.T) {
+	match, command, values := Matcher("run <speed> <-skip>", "run fast")
+	assert.Equal(t, match, false, "they should be equal")
+	assert.Equal(t, command, "", "they should be equal")
+	assert.Equal(t, len(values), 0, "they should be equal")
+}
+
+func TestMatcherRequiredShortFlag2(t *testing.T) {
+	match, command, values := Matcher("run <speed> <-skip>", "run fast --skip")
+	assert.Equal(t, match, false, "they should be equal")
+	assert.Equal(t, command, "", "they should be equal")
+	assert.Equal(t, len(values), 0, "they should be equal")
+}
+
+func TestMatcherExtraShortFlagFail(t *testing.T) {
+	match, command, values := Matcher("run <speed>", "run fast -jump")
+	assert.Equal(t, match, false, "they should be equal")
+	assert.Equal(t, command, "", "they should be equal")
+	assert.Equal(t, len(values), 0, "they should be equal")
+}
+
+func TestMatcherExtraShortFlagAccept(t *testing.T) {
+	match, command, values := Matcher("run <speed> [-]", "run fast -jump=xyz")
+	assert.Equal(t, match, true, "they should be equal")
+	assert.Equal(t, command, "run", "they should be equal")
+	assert.Equal(t, values["speed"], "fast", "they should be equal")
+	assert.Equal(t, values["jump"], "xyz", "they should be equal")
+	assert.Equal(t, len(values), 2, "they should be equal")
+}

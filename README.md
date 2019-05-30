@@ -10,9 +10,12 @@ A library for parsing and matching based on a mask for use with CLI or Bots.
 - `[xyz]` optional var named xyz
 - `[xyz...]` optional var named xyz and captures remaining input
 - `[xyz(string:foo,bar)]` optional var named xyz that can only be foo or bar
-- `<--xyz>` required flag named xyz
-- `[--xyz]` optional flag named xyz
-- `[--]` capture any flag
+- `<-xyz>` required short flag named xyz
+- `[-xyz]` optional short flag named xyz
+- `[-]` capture any short flag
+- `<--xyz>` required long flag named xyz
+- `[--xyz]` optional long flag named xyz
+- `[--]` capture any long flag
 
 
 ## Examples
@@ -25,6 +28,8 @@ A library for parsing and matching based on a mask for use with CLI or Bots.
 | `run <speed> [distance]`          | `run fast far`              | true  |
 | `run <speed> [distance]`          | `run fast far forever`      | false |
 | `run <speed> [distance]`          | `run fast "far forever"`    | true  |
+| `run <speed> [distance] <-j>`     | `run fast far -j`           | true  |
+| `run <speed> [distance] <-j>`     | `run fast far`              | false |
 | `run <speed> [distance] <--jump>` | `run fast far --jump=high`  | true  |
 | `run <speed> [distance] <--jump>` | `run fast far`              | false |
 | `run <speed> [distance] [--jump]` | `run fast far --jump=high`  | true  |
@@ -70,26 +75,27 @@ for _, t := range tokens {
 	fmt.Printf("Type:%v ", t.Type)
 	fmt.Printf("Valid:%v ", t.Valid)
 	fmt.Printf("Required:%v ", t.Required)
-	fmt.Printf("Flag:%v ", t.Flag)
+	fmt.Printf("Short Flag:%v ", t.ShortFlag)
+	fmt.Printf("Long Flag:%v ", t.LongFlag)
 	fmt.Printf("Remainder:%v\n", t.Remainder)
 }
 
 - - -
-Name:run Type:text Valid:run Required:true Flag:false Remainder:false
-Name:speed Type:string Valid:* Required:true Flag:false Remainder:false
-Name:distance Type:string Valid:* Required:false Flag:false Remainder:false
-Name:jump Type:string Valid:* Required:false Flag:true Remainder:false
+Name:run Type:text Valid:run Required:true Short Flag:false Long Flag:false Remainder:false
+Name:speed Type:string Valid:* Required:true Short Flag:false Long Flag:false Remainder:false
+Name:distance Type:string Valid:* Required:false Short Flag:false Long Flag:false Remainder:false
+Name:jump Type:string Valid:* Required:false Short Flag:false Long Flag:true Remainder:false
 ```
 
 
 ## Parser
 
 ```
-args, flags := matcher.Parser("run far away --jump=high")
+args, shortFlags, longFlags := matcher.Parser("run far away --jump=high")
 for i, arg := range args {
 	fmt.Printf("Arg %v: %v\n", i, arg)
 }
-for _, flag := range flags {
+for _, flag := range longFlags {
 	fmt.Printf("%v: %v\n", flag.Name, flag.Value)
 }
 

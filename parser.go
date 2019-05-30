@@ -11,20 +11,39 @@ type Flag struct {
 }
 
 // Parser function
-func Parser(input string) (args []string, flags []Flag) {
+func Parser(input string) (args []string, shortFlags []Flag, longFlags []Flag) {
+
+	// setup vars and tokenize
 	ts := Tokenize(input)
 	args = make([]string, 0)
-	flags = make([]Flag, 0)
+	shortFlags = make([]Flag, 0)
+	longFlags = make([]Flag, 0)
+
+	// handle short vars
+
+	// handle long vars
 	for _, t := range ts {
 		if strings.HasPrefix(t, "--") {
 			if strings.Contains(t, "=") {
-				flags = append(flags, Flag{
+				longFlags = append(longFlags, Flag{
 					Name:  strings.Split(t, "=")[0][2:],
 					Value: strings.Split(t, "=")[1],
 				})
 			} else {
-				flags = append(flags, Flag{
+				longFlags = append(longFlags, Flag{
 					Name:  t[2:],
+					Value: "true",
+				})
+			}
+		} else if strings.HasPrefix(t, "-") {
+			if strings.Contains(t, "=") {
+				shortFlags = append(shortFlags, Flag{
+					Name:  strings.Split(t, "=")[0][1:],
+					Value: strings.Split(t, "=")[1],
+				})
+			} else {
+				shortFlags = append(shortFlags, Flag{
+					Name:  t[1:],
 					Value: "true",
 				})
 			}
@@ -32,5 +51,5 @@ func Parser(input string) (args []string, flags []Flag) {
 			args = append(args, t)
 		}
 	}
-	return args, flags
+	return args, shortFlags, longFlags
 }

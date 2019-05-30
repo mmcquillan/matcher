@@ -12,16 +12,16 @@ func Matcher(mask string, input string) (match bool, command string, values map[
 	match = true
 	command = ""
 	values = make(map[string]string)
-	args, flags := Parser(input)
+	args, shortFlags, longFlags := Parser(input)
 	masks := Masker(mask)
 	pos := 0
 
-	// initial flag pass
-	for _, flag := range flags {
+	// initial short flag pass
+	for _, flag := range shortFlags {
 		allFlags := false
 		matchFlag := false
 		for _, mask := range masks {
-			if mask.Flag {
+			if mask.ShortFlag {
 				if mask.Name == flag.Name {
 					matchFlag = true
 				}
@@ -37,13 +37,73 @@ func Matcher(mask string, input string) (match bool, command string, values map[
 		}
 	}
 
+	// initial long flag pass
+	for _, flag := range longFlags {
+		allFlags := false
+		matchFlag := false
+		for _, mask := range masks {
+			if mask.LongFlag {
+				if mask.Name == flag.Name {
+					matchFlag = true
+				}
+				if mask.Name == "" {
+					allFlags = true
+				}
+			}
+		}
+		if !matchFlag && allFlags {
+			values[flag.Name] = flag.Value
+		} else if !allFlags && !matchFlag {
+			match = false
+		}
+	}
 	// loop over the mask
 	for _, mask := range masks {
 		if match {
-			if mask.Flag {
+			if mask.ShortFlag {
 				pos--
 				flagMatch := false
-				for _, flag := range flags {
+				for _, flag := range shortFlags {
+					if mask.Name == flag.Name {
+
+						// check for valid values
+						valid := false
+						for _, v := range strings.Split(mask.Valid, ",") {
+							if v == flag.Value || v == "*" {
+								valid = true
+							}
+						}
+						match = valid
+
+						// check for type
+						switch mask.Type {
+						case "string":
+							values[mask.Name] = flag.Value
+						case "int":
+							values[mask.Name] = flag.Value
+							_, err := strconv.ParseInt(flag.Value, 10, 64)
+							if err != nil {
+								match = false
+							}
+						case "bool":
+							values[mask.Name] = flag.Value
+							_, err := strconv.ParseBool(flag.Value)
+							if err != nil {
+								match = false
+							}
+						}
+
+						flagMatch = true
+
+					}
+				}
+				if mask.Required && !flagMatch {
+					match = false
+				}
+			} else if mask.LongFlag {
+				pos--
+				flagMatch := false
+				for _, flag := range longFlags {
 					if mask.Name == flag.Name {
 
 						// check for valid values
