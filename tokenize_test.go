@@ -1,6 +1,7 @@
 package matcher
 
 import (
+	"html"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -44,4 +45,19 @@ func TestTokenizeFlags(t *testing.T) {
 	assert.Equal(t, tokens[3], "--skip", "they should be equal")
 	assert.Equal(t, tokens[4], "-x", "they should be equal")
 	assert.Equal(t, len(tokens), 5, "they should be equal")
+}
+
+func TestTokenizeUnicodeWhitespace(t *testing.T) {
+	tokens := Tokenize("run" + html.UnescapeString("&#160;") + "far away")
+	assert.Equal(t, tokens[0], "run", "they should be equal")
+	assert.Equal(t, tokens[1], "far", "they should be equal")
+	assert.Equal(t, tokens[2], "away", "they should be equal")
+}
+
+func TestTokenizeUnicodeTokens(t *testing.T) {
+	tokens := Tokenize("🚀🐢 far 🌐🏳️‍🌈 \"🍻 . 🔥\"")
+	assert.Equal(t, tokens[0], "🚀🐢", "they should be equal")
+	assert.Equal(t, tokens[1], "far", "they should be equal")
+	assert.Equal(t, tokens[2], "🌐🏳️‍🌈", "they should be equal")
+	assert.Equal(t, tokens[3], "🍻 . 🔥", "they should be equal")
 }

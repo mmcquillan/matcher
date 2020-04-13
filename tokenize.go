@@ -1,33 +1,36 @@
 package matcher
 
-import ()
+import (
+	"unicode"
+)
 
 // Tokenize func
 func Tokenize(input string) (tokens []string) {
-	token := []int32{}
+	runeInput := []rune(input)
+
+	token := []rune{}
 	isQuote := false
-	for i, c := range input {
-		if c == 34 || c == 39 { // quotes
+	for i, r := range runeInput {
+		if r == rune('\'') || r == rune('"') { // quotes
 			isQuote = !isQuote
 		}
 		if isQuote {
-			if c != 34 && c != 39 {
-				token = append(token, c)
+			if r != rune('\'') && r != rune('"') {
+				token = append(token, r)
 			}
 		} else {
-			switch c {
-			case 9, 10, 11, 12, 13, 32:
+			if unicode.IsSpace(r) {
 				if len(token) > 0 {
 					tokens = append(tokens, string(token))
 				}
-				token = []int32{}
-			default:
-				if c != 34 && c != 39 {
-					token = append(token, c)
+				token = []rune{}
+			} else {
+				if r != rune('\'') && r != rune('"') {
+					token = append(token, r)
 				}
 			}
 		}
-		if i == len(input)-1 && len(token) > 0 {
+		if i == len(runeInput)-1 && len(token) > 0 {
 			tokens = append(tokens, string(token))
 		}
 	}
